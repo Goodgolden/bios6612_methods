@@ -1,0 +1,134 @@
+---
+title: "Intro to GLMs, Part 2"
+subtitle: "BIOS 6612"
+author: "Julia Wrobel, PhD"
+date: January 26, 2021
+header-includes:
+   - \usepackage{bm}
+output:
+  powerpoint_presentation:
+    reference_doc: ../cu_style.pptx
+---
+
+```{r, echo= FALSE, include = FALSE}
+## generalizing the normal linear model to
+
+
+library(tidyverse)
+library(dobson) #  data from Dobson and Barnett GLM book
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE
+)
+
+theme_set(theme_bw() + theme(legend.position = "bottom"))
+```
+
+## Overview
+
+Today, we cover:
+
+* Introduction to GLMs
+* Exponential family distributions
+
+<br>
+
+Readings:
+
+* Dobson & Barnett, Chapter 3
+
+
+## Generalizing the normal linear model
+
+- The **generalized** part of GLM refers to
+  - Dropping the normality requirement
+  - Relaxing the homoskedasticity assumption
+  - Allowing for some function $E(Y_i)$ to be linear in the parameters (identity function in normal linear regression)
+  
+
+
+- Allows us to fit linear models to discrete, non-normal, and categorical outcomes
+
+<br>
+
+- Focuses on outcomes from *exponential family (EF) distributions*
+  - includes Normal, binomial, Poisson, exponential, and more
+  
+## Exponential family distributions
+
+-  If a distribution is an exponential family, then its pdf can be written as:
+
+<br>
+
+$$f(y;\theta, \phi) = \exp\left\{ \frac{t(y)\theta - b(\theta)}{a(\phi)} + c(y, \phi )\right\}$$
+<br>
+
+- Typically, $\theta$ is the parameter of interest
+- $\phi$ (dispersion; related to the variance) is  a nuisance parameter
+- If $t(y) = y$, the family is in **canonical** form, and $\theta$ is referred to as the canonical (**natural**) parameter
+
+::: notes
+- many common distributions (normal, Poisson, binomial) follow this format
+- theta relates to the mean function
+- phi is a nuisance parameter ie. not a parameter of interest but still must be accounted for in analysis
+- more on canonical forms and natural parameters later
+::: 
+
+## Mean and variance of EF distributions
+
+$$f(y;\theta, \phi) = \exp\left\{ \frac{t(y)\theta - b\theta}{a(\phi)} + c(y, \phi )\right\}$$
+
+- In this form, EF distributions have some useful properties:
+
+  - $E(Y) = b'(\theta)$
+  - $Var(Y) = b''(\theta)a(\phi)$
+- $E(Y)$ depends only on the natural parameter, $\theta$
+- $Var(Y)$ is a function of both $\theta$ and $\phi$
+  - Note that in some cases, the variance of the outcome does not depend on the mean at all: e.g., normal distribution
+  - Many other distributions do involve dependence between variance and mean
+
+## Exponential family form: Normal distribution
+
+Put normal distribution in exponential family form
+
+<br>
+
+$$f(y; \mu, \sigma^2) = \frac{1}{\sigma \sqrt{2\pi}}\exp\left\{-\frac{1}{2\sigma^2}(y-\mu)^2 \right\}$$
+
+## Exponential family form: Normal distribution
+
+## Exponential family form: Normal distribution
+
+$$f(y; \mu, \sigma^2) = \exp\left\{-\frac{y\mu - \frac{1}{2}\mu^2}{\sigma^2} + \left(-y^2/2\sigma^2 +\log(\sigma\sqrt{2\pi})\right) \right\}$$
+
+- $t(y) = y$
+- $\theta = \mu$
+- $b(\theta) = \frac12\mu^2$
+- $a(\phi) = \sigma^2$
+- $E(Y) = b'(\theta) = \mu$
+- $Var(Y) = b''(\theta)a(\phi) = \sigma^2$
+
+## Exponential family form: binomial distribution
+
+
+$$f(y; \pi) = {n \choose y}\pi^y(1-\pi)^{n-y} = \exp \left\{ y\log(\frac{\pi}{1-\pi})+n\log(1-\pi) +\log{n \choose y} \right\}$$
+
+
+
+- $t(y) = y$
+- $\theta = \log(\frac{\pi}{1-\pi}) = logit(\pi)$;  $\pi = \frac{e^{\theta}}{1+e^{\theta}}$ 
+- $b(\theta) = -n\log(1-\pi) = n\log(1+e^{\theta})$
+- $a(\phi) = 1$
+
+
+## Exponential family: why do we care?
+
+Exponential family distributions are one of three components in GLMs
+
+<br>
+ 
+* We'll learn about the other two components and how they all fit together in the next lecture!
+
+

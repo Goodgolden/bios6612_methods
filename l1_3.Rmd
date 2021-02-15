@@ -1,0 +1,111 @@
+---
+title: "Intro to GLMs, Part 3"
+subtitle: "BIOS 6612"
+author: "Julia Wrobel, PhD"
+date: January 26, 2021
+header-includes:
+   - \usepackage{bm}
+output:
+  powerpoint_presentation:
+    reference_doc: ../cu_style.pptx
+---
+
+```{r, echo= FALSE, include = FALSE}
+## generalizing the normal linear model to
+
+
+library(tidyverse)
+library(dobson) #  data from Dobson and Barnett GLM book
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE
+)
+
+theme_set(theme_bw() + theme(legend.position = "bottom"))
+```
+
+## Overview
+
+Today, we cover:
+
+* Components of GLMs
+
+<br>
+
+Readings:
+
+* Dobson & Barnett, Chapter 3
+
+
+
+## GLM motivation
+
+Objective: quantify the association between response $Y_i$ and set of predictors $\textbf{x}_i$
+
+- Know methods for when $Y_i \sim N(\mu, \sigma^2)$ (linear regression, from 6611)
+- Transformations of $Y_i$ could be employed to remedy non-normality (e.g., $\log Y_i$ for skewed responses)
+- If $Y_i$ is Bernoulli, no transformation will yield a normal distribution
+
+
+## Generalized linear models
+
+Initially developed by Nelder and Wedderburn (1972, **JRSSA**)
+
+- Assume that a known function of $\mu_i = E(Y_i)$ is related linearly to covariates $\boldsymbol{x}_i$:
+
+$$g(\mu_i) = \textbf{x}_i^T \boldsymbol{\beta}$$
+
+- The function $g(\cdot)$ is referred to as the **link** function
+- it **links** the linear predictor (linear combination of the covariates) with the mean of the outcome
+- Still assuming independence of $Y_1 \ldots Y_n$
+- Linearity assumption now applies to $g(\mu_i)$, which need not equal $E(Y_i)$
+- $\boldsymbol{x}_i$ is still treated as fixed 
+
+::: notes
+- link function puts mean of the outcome and linear predictor on the same scale (same range of values)
+::: 
+
+## Components of the GLM
+
+In setting up a GLM, the following are specified:
+
+<br>
+
+1. Distribution (**random component**): $Y_i$ is assumed to follow an exponential family distribution
+1. **Systematic component**: linear predictor $\eta_i = \boldsymbol{x}_i^T\boldsymbol{\beta}$
+1. **Link function** $g$
+
+    - connects $\boldsymbol{x}_i$ and $\mu_i$
+    - $g(\mu_i) = \eta_i$
+    - should be an analytically tractable, invertible function such that $g^{-1}(\eta_i) = \mu_i$
+
+
+::: notes
+- systematic component
+::: 
+
+## Link functions
+
+- Link function depends on the outcome distribution. Common ones are
+  - $\log(\mu_i)$
+  - $\text{logit } \mu_i = \log\frac{\mu_i}{1-\mu_i}$ (logistic regression)
+  - $\text{probit } \mu_i = \Phi^{-1}(\mu_i)$ 
+    - $\Phi(\cdot)$ is CDF for a standard normal random variable
+
+
+## Canonical links
+
+
+- We observe $(Y_i, \boldsymbol{x}_i)$ for $i = 1,\ldots,n$ 
+- $Y_i|\boldsymbol{x}_i$ is assumed to have an EF distribution
+
+$$f(y_i;\theta_i, \phi) = \exp\left\{ \frac{t(y)\theta - b\theta}{a(\phi)} + c(y, \phi )\right\}$$
+  
+- the link function $g$ is **canonical** if $\theta_i = \eta_i$  
+- Exponential families with canonical link are preferred, in terms of parameter estimation and interpretation
+  - For logit link with binary response, this gives *odds ratio* interpretations
+  - For log link with Poisson response, this gives *rate ratio* interpretations
+  
+  

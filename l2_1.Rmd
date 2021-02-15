@@ -1,0 +1,312 @@
+---
+title: "L2.1: Maximum Likelihood Estimation"
+subtitle: "BIOS 6612"
+author: "Julia Wrobel"
+date: February 1, 2021
+header-includes:
+   - \usepackage{bm}
+output:
+  powerpoint_presentation:
+    reference_doc: ../cu_style.pptx
+---
+
+```{r, echo= FALSE, include = FALSE}
+library(tidyverse)
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 7,
+  fig.height = 5
+)
+
+theme_set(theme_bw() + theme(legend.position = "bottom"))
+```
+
+
+## Overview
+
+Today, we cover:
+
+* Likelihood functions
+* Maximum Likelihood Estimation
+* MLE: Bernoulli examples
+
+<br>
+
+Optional readings:
+
+* Dobson & Barnett: Chapters 4, 5.1-5.8
+
+## Joint probability density function
+
+Let $Y_1, Y_2, \ldots Y_n$ be *independent* random variables that follow the same exponential family distribution
+
+<br>
+
+* Density of a single observation is $f(Y_i; \boldsymbol{\theta})$
+* **Joint density** of $Y_1$ and $Y_2$ is $f(Y_1, Y_2 ; \boldsymbol{\theta}) = f(Y_1; \boldsymbol{\theta}) \times f(Y_2; \boldsymbol{\theta})$
+* **Joint density** $f(Y_1, Y_2, \ldots , Y_n ; \boldsymbol{\theta})$ of $Y_1, Y_2, \ldots Y_n$ 
+  * Characterizes probability distribution of $n$ values
+  * Assumes $\boldsymbol{\theta}$ is fixed
+
+<br>
+
+$$f(Y_1, Y_2, \ldots , Y_n ; \boldsymbol{\theta}) =  \prod_{i=1}^n f(Y_i;  \boldsymbol{\theta}) = f(Y_1; \boldsymbol{\theta}) \times f(Y_2; \boldsymbol{\theta}) \times \ldots \times f(Y_n; \boldsymbol{\theta})$$
+
+ 
+::: notes
+_ these are *n* *iid* EF variables
+- Joint PDF characterizes probability distribution of multiple values
+- theta are parameters (like mu or sigma) that characterize the EF distribution 
+::: 
+
+
+## Likelihood function
+
+What is the likelihood function?
+
+<br>
+
+$$L(\boldsymbol{\theta} ; Y_1, Y_2, \ldots , Y_n) = f(Y_1, Y_2, \ldots , Y_n ; \boldsymbol{\theta})$$
+
+<br>
+
+* *Likelihood function*, $L(\boldsymbol{\theta}; \boldsymbol{Y})$, is a way to assess plausible parameter parameter values given observed data
+
+<br>
+
+* Algebraically the same as the joint PDF
+  * Joint PDF is viewed as function of $\boldsymbol{Y}$ with $\boldsymbol{\theta}$ fixed
+  * Likelihood is function of $\boldsymbol{\theta}$ with $\boldsymbol{Y}$ fixed
+
+::: notes
+- likelihood is algebraically the same as the joint PDF but change in notation reflects shift in emphasis from random variables (Y) with fixed theta to parameters theta with Y fixed
+::: 
+
+
+## Likelihood for *n* Normal variables
+
+Likelihood function for $n$ *iid* Normal variables  $Y_1, Y_2, \ldots Y_n \sim N(\mu, \sigma^2)$
+
+$$f(Y_1; \mu, \sigma^2) = \frac{1}{\sigma \sqrt{2\pi}}\exp\left\{-\frac{1}{2\sigma^2}(Y_1-\mu)^2 \right\}$$
+
+<br>
+
+$$
+\begin{align*} 
+L(\mu, \sigma^2; \boldsymbol{Y}) &=  \prod_{i=1}^n \left( \frac{1}{\sigma \sqrt{2\pi}}\exp\left\{-\frac{1}{2\sigma^2}(Y_i-\mu)^2 \right\}  \right)\\[3mm]
+ &=  \left(\frac{1}{\sigma \sqrt{2\pi}}\right)^n \exp\left\{-\frac{1}{2\sigma^2} \sum_{i = 1}^n (Y_i-\mu)^2  \right\}
+\end{align*}
+$$
+
+::: notes
+- likelihood is algebraically the same as the joint PDF but change in notation reflects shift in emphasis from random variables (Y) with fixed theta to parameters theta with Y fixed
+::: 
+
+
+
+## Maximum Likelihood Estimation
+
+
+
+A *maximum likelihood estimator* (MLE) maximizes the likelihood function
+
+
+* For a given parametric model, maximum likelihood identifies the parameter values which make the realized data “most likely”
+  * Parameter can be a scalar ($\theta$) or a vector ($\boldsymbol{\theta}$)
+  * Specific value of estimator is denoted $\hat{\theta}$
+
+* Goal is to find value $\hat{\theta}$ which gives largest $L(\hat{\theta}; \boldsymbol{Y})$
+  * Often easier to maximize log-Likelihood $\log L(\theta;\boldsymbol{Y})$
+
+<br>
+
+* Most if not all of the models we will be using during this course will be fit to data using MLE methods
+
+## Steps of Maximum Likelihood Estimation
+
+Generally, the steps to get an MLE are
+
+<br>
+
+1. Write out log-likelihood $\log L(\boldsymbol{\theta}; \boldsymbol{Y})$
+2. Solve *score function(s)* $\frac{\partial \log L(\boldsymbol{\theta})}{\partial \boldsymbol{\theta}} = 0$
+3. Verify the solution is a *maximum* and not a *minimum*, i.e.
+
+$$\left[\frac{\partial^2 \log L(\theta)}{\partial \theta^2}\right]_{\theta = \hat{\theta}} < 0$$
+
+
+::: notes
+- this will work best for well-behaved (convex) functions
+- function needs to be differentiable
+- there will be a score equation for each component of theta
+::: 
+
+## Score function
+
+The *score function* or *score equation(s)* is denoted
+
+$$U(\boldsymbol{\theta}) = \frac{\partial \log L(\boldsymbol{\theta})}{\partial \boldsymbol{\theta}}$$
+<br>
+
+* First derivative of the log-likelihood with respect to each component of $\theta$
+* If $\theta$ is scalar, there will be one equation
+* If $\theta$ has 2 components, there will be two equations
+
+<br>
+
+* Solve for MLE by setting $U(\boldsymbol{\theta}) = 0$
+
+## Information function
+
+The variance of the *score* is called the *information*, $I(\theta)$
+
+$$I(\theta) = Var[U(\theta)] = E[U(\theta)^2] = -E[U'(\theta)] = -E\left[\frac{\partial^2\log L(\theta)}{\partial \theta^2}\right]$$
+
+<br>
+
+* Used to find variance of MLEs
+* Also called *Fisher Information*
+
+
+::: notes
+- this will come up again in the next lecture
+- Named after Ronald Fisher who founded statistical genetics but believed in eugenics
+::: 
+
+## MLE Intuition
+
+:::::::::::::: {.columns}
+::: {.column}
+```{r}
+set.seed(2021)
+tibble(x = rnorm(1000),
+       density = dnorm(x),
+       y = x + 2) %>%
+  ggplot(aes(y, density)) +
+  geom_line() +
+  geom_hline(aes(yintercept = max(density)), linetype = 2, color = "blue1") +
+  #annotate(geom = 'text', label = 'L(theta_hat)', x = 2, y = .3, hjust = 0, vjust = 1) +
+  geom_vline(aes(xintercept = mean(y)), linetype = 2, color = "purple") +
+  labs(x = "theta", y = "Likelihood(theta)", title = "Likelihood function")
+
+```
+:::
+::: {.column}
+```{r}
+set.seed(2021)
+tibble(x = rnorm(1000),
+       density = dnorm(x),
+       y = x + 2,
+       logdensity = log(density)) %>%
+  ggplot(aes(y, logdensity)) +
+  geom_line() +
+  geom_hline(aes(yintercept = max(logdensity)), linetype = 2, color = "blue1") +
+  #annotate(geom = 'text', label = 'L(theta_hat)', x = 2, y = .3, hjust = 0, vjust = 1) +
+  geom_vline(aes(xintercept = mean(y)), linetype = 2, color = "purple") +
+  labs(x = "theta", y = "Log-likelihood(theta)", title = "Log-likelihood function")
+```
+:::
+::::::::::::::
+
+::: notes
+- maximum value of likelihood occurs around theta = 2
+- this is the MLE
+- for log-likelihood max occurs at same value of theta
+- for both plots the max (or a hypothetical min) occurs where the derivative of the function cross 0
+- need to check to make sure it is a maximum
+::: 
+
+
+
+
+## Maximum Likelihood Estimation (Bernoulli Example)
+
+Simple Case: Bernoulli ($Y_i = 0$ or $1$)
+
+- Suppose in a population from which we are sampling, each individual has the same probability, $\pi$, that an event occurs
+  - Event can be a disease, trait, etc
+- We want to estimate $\pi = P(Y = 1)$, from a random sample of $n$ individuals
+- For each individual in our sample of size $n$,
+  - $Y_i=1$: event occurs for $i$th subject
+  - $Y_i=0$: event does not occur for subject $i$
+
+
+::: notes
+- Bernoulli variable also called an indicator variable
+- event can be a disease, trait, etc. 
+:::
+
+
+## Maximum Likelihood Estimation (Bernoulli Example)
+
+The Bernoulli probability mass function (p.m.f.) can be written as
+
+$$f(Y_i; \pi) = P(Y_i=y|\pi) = \pi^y(1-\pi)^{1-y}; y \in \{0, 1\}; 0\le \pi\le 1$$
+
+## Maximum Likelihood Estimation (Bernoulli Example)
+
+
+::: notes
+- write out log Likelihood
+- make note of score equation
+:::
+
+
+## Maximum Likelihood Estimation (Bernoulli Example)
+
+Set score function to 0 and solve for $\pi$
+
+$$U(\pi) = \frac{\partial l(\pi)}{\partial \pi} = \frac{\sum_{i=1}^n Y_i}{\pi} - \frac{n - \sum_{i=1}^n Y_i}{1 - pi} \stackrel{\text{set}}{=} 0$$
+
+## Maximum Likelihood Estimation (Bernoulli Example)
+
+Check that solution is a maximum (not a minimum)
+
+
+::: notes
+- undefined on the boundary of the parameter space (when sum Y = 0 or n)
+:::
+
+
+## Second Bernoulli Example
+
+Among 10 randomly selected individuals, 3 have a disease. WHat is the MLE for $\pi$, the proportion in the population with the disease?
+
+$$L(\pi;\boldsymbol{Y}) = \prod_{i = 1}^n \pi^{Y_i}(1-\pi)^{1-Y_i}$$
+
+<br>
+
+$$\log L(\pi; \boldsymbol{Y}) = \left(\sum_iY_i\right)\log\pi + \left(n-\sum_iY_i\right)\log(1-\pi)$$
+
+## Second Bernoulli Example
+
+![](table2.1.png)
+
+## Second Bernoulli Example
+
+:::::::::::::: {.columns}
+::: {.column}
+```{r, echo = TRUE}
+## evaluates likelihood at 100 possible values of pi
+likelihood_plot = tibble(
+  n_individuals = 10,
+  n_events = 3,
+  pi = seq(0, 1, length.out = 100), ## possible parameter values
+  likelihood = dbinom(n_events, n_individuals, prob = pi)
+  ) %>%
+  ggplot(aes(pi, likelihood)) +
+  geom_line() +
+  labs(x = "pi", y = "Likelihood")
+```
+:::
+::: {.column}
+```{r}
+likelihood_plot
+```
+:::
+::::::::::::::
+
+

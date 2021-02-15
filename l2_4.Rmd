@@ -1,0 +1,214 @@
+---
+title: "L2.4: Transformations of MLEs"
+subtitle: "BIOS 6612"
+author: "Julia Wrobel"
+date: February 1, 2021
+header-includes:
+   - \usepackage{bm}
+output:
+  powerpoint_presentation:
+    reference_doc: ../cu_style.pptx
+---
+
+```{r, echo= FALSE, include = FALSE}
+library(tidyverse)
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 7,
+  fig.height = 5
+)
+
+theme_set(theme_bw() + theme(legend.position = "bottom"))
+```
+
+## Overview
+
+Today, we cover:
+
+* Invariance property of MLEs
+* Inference on transformations of MLEs
+* The Delta Method
+
+<br>
+
+Optional readings:
+
+* Dobson & Barnett: Chapter 5.3
+* Agresti: 3.1.5-3.1.7
+* Casella and Berger: pages 319-322
+
+
+## Invariance Property of MLEs
+
+Allows us to find the MLE of transformations of an MLE
+
+<br>
+
+* If $\hat{\theta}$ is the MLE of $\theta$, then for any function $\tau(\hat{\theta})$ is the MLE of $\tau(\theta)$!
+
+
+
+::: notes
+- Show an example on the next slide
+- I will not go over the proof, but you can find it in Casella and Berger
+::: 
+
+## Invariance Property of MLEs
+
+Suppose $Y_1, Y_2, \ldots, Y_n$ is a sample of independent Normal($\mu$, $\sigma^2$) random variables with $E(Y_i) = \mu$.
+
+* Sample mean is $\hat{\mu} = \bar{Y} = \frac1n \sum_{i = 1}^n Y_i$ is the MLE of $\mu$
+
+<br>
+
+What is the MLE of $1/\mu$? Using invariance property of MLEs,
+
+* $1/\hat{\mu} = 1/\bar{Y}$ is the MLE of $1/\mu$
+
+
+## Variance of MLE transformations
+
+* What if we want a confidence interval around our estimate $1/\hat{\mu}$?
+
+<br>
+
+* How do we calculate $Var[\tau(\theta)]$?
+  * Use the Delta Method
+
+##  Delta Method
+
+* Assume $\sqrt{n}(\hat{\theta}_n - \theta_0) \to^d N(0, \sigma^2)$
+  * Central Limit Theorem, Asymptotic normality of MLEs
+  
+<br>  
+  
+* For a given function $\tau$ and specific value of $\theta_0$, suppose that $\tau'(\theta_0)$ exists and is not 0
+* Then 
+
+$$\sqrt{n}(\tau(\hat{\theta}_n) - \tau(\theta_0)) \to^d N(0, [\tau'(\theta_0)]^2\sigma^2)$$
+
+
+* So asymptotic variance $Var[\tau(\theta)] \approx [\tau'(\theta_0)]^2\sigma^2)$
+
+::: notes
+- Delta method allows you to find asymptotic variance of functions of estimators
+- Approx equal and not directly equal because this is asymptotic variance, only true in the limit
+::: 
+
+
+## Delta method: example
+
+
+* Take our earlier estimate of $1/\mu$, $1/\bar{Y}$
+* From central limit theorem, we know that 
+
+$$\sqrt{n}(\bar{Y}- \mu) \to^d N(0, \sigma^2)$$
+
+* $\sigma^2 = Var(Y_1)$
+* Our function $\tau$ is $\tau(\mu) = 1/\mu$
+  * Derivative is $\tau'(\mu) = -\frac{1}{\mu^2}$
+* Delta method tells us that 
+
+$$\sqrt{n}(1/\bar{Y}- 1/\mu) \to^d N\left[0, \left(-\frac{1}{\mu^2}\right)^2\sigma^2\right]$$
+
+* So variance of $1/\bar{Y}$ is $\frac{\sigma^2}{\mu^4}$
+  
+::: notes
+- Delta method allows you to find asymptotic variance of functions of estimators
+:::  
+  
+## Delta method: example
+
+* We can check this answer using simulations!! Try $Y_1 \sim N(0.5)$
+
+```{r, echo = TRUE}
+trials = 100000 
+tau_theta_hat = var_tau_theta_hat = rep(NA, length.out = trials) # define empty vector
+n = 100
+
+set.seed(20341)
+
+for(trial in 1:trials) { 
+  Y = rnorm(n, mean = 0.5)
+  tau_theta_hat[trial] = 1/mean(Y)    # calculate 1/pi_hat
+  var_tau_theta_hat[trial] = (var(Y)/n)/mean(Y)^4 # calculate delta method variance
+}
+```
+
+## Delta method: example
+
+```{r, echo = TRUE}
+mean(tau_theta_hat)
+# should be equal to 
+1/.5
+
+var(tau_theta_hat)
+# should be equal to 
+mean(var_tau_theta_hat) 
+```
+
+* We get reasonably close to the calculated theoretical values when $n = 100$
+* Look at the distribution of these values in the next slide
+  * Should be $\tau(\theta) \sim N(2, 0.4)$
+
+## Histogram of t(theta)
+
+
+:::::::::::::: {.columns}
+::: {.column}
+```{r, echo=FALSE, fig.height = 3}
+tibble(tau_theta_hat = tau_theta_hat) %>%
+  ggplot(aes(tau_theta_hat)) +
+  geom_histogram(aes(y = ..density..), fill = "lightblue") +
+  stat_function(fun = dnorm, args = list(mean = 1/0.5, sd = sqrt((1/n)/.5^4)))
+```
+:::
+::: {.column}
+* The histogram doesn’t seem to adhere too closely to the normal density curve, which could suggest our sample size of $n = 100$ is too small for the asymptotic results to hold very exactly
+
+<br>
+
+* Let’s simulate again with $n = 1000$
+:::
+::::::::::::::
+
+
+
+
+## Histogram of t(theta)
+
+:::::::::::::: {.columns}
+::: {.column}
+
+```{r, echo = FALSE, fig.height = 3}
+trials = 100000 
+tau_theta_hat = var_tau_theta_hat = rep(NA, length.out = trials) # define empty vector
+n = 1000
+
+set.seed(20341)
+
+for(trial in 1:trials) { 
+  Y = rnorm(n, mean = 0.5)
+  tau_theta_hat[trial] = 1/mean(Y)    # calculate 1/pi_hat
+  var_tau_theta_hat[trial] = (var(Y)/n)/mean(Y)^4 # calculate delta method variance
+}
+
+tibble(tau_theta_hat = tau_theta_hat) %>%
+  ggplot(aes(tau_theta_hat)) +
+  geom_histogram(aes(y = ..density..), fill = "lightblue") +
+  stat_function(fun = dnorm, args = list(mean = 1/0.5, sd = sqrt((1/n)/.5^4)))
+
+```
+
+:::
+::: {.column}
+* This is better: sometimes it can take very large samples before asymptotic results “kick in”
+
+:::
+::::::::::::::
+
+
+

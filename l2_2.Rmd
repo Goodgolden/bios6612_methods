@@ -1,0 +1,189 @@
+---
+title: "L2.2: Asymptotic Properties of MLEs"
+subtitle: "BIOS 6612"
+author: "Julia Wrobel"
+date: February 1, 2021
+header-includes:
+   - \usepackage{bm}
+output:
+  powerpoint_presentation:
+    reference_doc: ../cu_style.pptx
+---
+
+```{r, echo= FALSE, include = FALSE}
+library(tidyverse)
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 7,
+  fig.height = 5
+)
+
+theme_set(theme_bw() + theme(legend.position = "bottom"))
+```
+
+
+## Overview
+
+Today, we cover:
+
+* Asymptotic properties of MLEs
+* Observed and expected Fisher Information
+
+<br>
+
+Optional readings:
+
+* Dobson & Barnett: Chapters 4, 5.1-5.8
+
+
+## Asymptotic properties of MLEs
+
+<br>
+
+The exact distribution of MLEs can be very complicated, often we have to rely on large sample methods instead.
+
+* Basically, these ensure that as your sample size gets larger, your parameter estimate gets closer to the true value and its variability decreases
+
+
+::: notes
+- Those of you who take biostats theory will go into this in more detail
+::: 
+
+## Asymptotic properties: Consistency
+
+
+Let the sequence of MLEs of $\theta_0$ be denoted by $\hat{\theta}_n$. For any fixed $\epsilon > 0$, as $n\to \infty$
+
+<br>
+
+$$P(|\hat{\theta}_n - \theta_0| >  \epsilon) \to 0$$
+
+<br>
+
+* Ensures estimate converges in probability to the true value
+
+## Asymptotic properties: Asymptotic Normality
+
+Let the sequence of MLEs of $\theta_0$ be denoted by $\hat{\theta}_n$.
+
+$$\sqrt{n}(\hat{\theta}_n - \theta_0) \to^d N(0, \sigma^2)$$
+<br>
+
+* A properly centered and scaled sequence is distributed normally with 0 mean and variance $\sigma^2$ as $n \to \infty$
+
+## Asymptotic properties: Asymptotic Efficiency
+
+- Asymptotic efficiency: $\hat{\theta}$ achieves minimum variance among all asymptotically unbiased estimators
+
+
+  
+::: notes
+- you will learn more about this in theory, if you take it
+::: 
+
+
+## Why do we even care about asymptotics?
+
+* Show that our point estimates converge to true value
+  * Means we are getting at some "ground truth" about the population as a whole
+
+<br>
+
+* Get confidence intervals!
+
+<br>
+
+* Do hypothesis tests!
+  * Get p-values!
+
+
+
+
+## Asymptotic variance of MLEs
+
+How to calculate $\hat{Var}(\hat{\theta})$?
+
+* Use the Fisher information function $I(\theta)$
+
+
+<br>
+
+Expected information
+
+$$\hat{Var}(\hat{\theta}) = - \left\{ E\left(\frac{\partial^2\log L(\theta)}{\partial \theta^2}\right)\right\}_{\theta= \hat{\theta}}^{-1} = \left[I(\hat{\theta})\right]^{-1}$$
+
+<br>
+
+Observed information
+
+$$\hat{Var}(\hat{\theta}) = - \left\{ \left(\frac{\partial^2\log L(\theta)}{\partial \theta^2}\right)\right\}_{\theta= \hat{\theta}}^{-1} = \left[I_n(\hat{\theta})\right]^{-1}$$
+
+::: notes
+- I will use "information" and "Fisher information" interchangeably
+- This is the kind of thing that you could see on your qualifying exam (MS biostats students)
+- As information increases, variance decreases
+- Both observed and expected information give estimates of asymptotic variance
+::: 
+
+## Observed vs. Expected information
+
+* Estimates of variance calculated using either observed or expected are similar for sufficiently large sample sizes
+* Observed converges in probability to expected
+
+<br>
+
+* For most GLMs the observed and expected information are identical
+
+<br>
+
+* Efron and Hinkley (Biometrika, 1978) argue that in general better variance estimates are obtained using *observed* information
+  * Observed is typically easier to compute
+
+
+## Fisher information (Bernoulli example)
+
+For $Y_1,\ldots, Y_n \sim Bernoulli(\pi)$, the MLE is $\hat{\pi} = \bar{Y}$
+* For large n, 
+
+$$\hat{\pi} \sim N\left[ \pi , Var(\hat{\pi}) \right]$$
+
+Calculate Fisher information $I(\pi)$ and asymptotic $Var(\hat{\pi})$
+
+
+::: notes
+- large n implies asymptotic distribution of pi_hat
+::: 
+
+## Fisher information (Bernoulli example)
+
+
+
+
+
+
+## Fisher information (Bernoulli example)
+
+Solution: $Var(\pi) = \frac{\pi(1-\pi)}{n}$
+
+
+
+::: notes
+- Variance gets smaller as n increases and information gets bigger
+::: 
+
+
+## Observed information (Bernoulli example)
+
+In this case observed and expected information are the same
+
+$$
+\begin{align*}
+\hat{Var}(\hat{\theta}) &= - \left\{ \left(\frac{\partial^2\log L(\theta)}{\partial \theta^2}\right)\right\}_{\theta= \hat{\theta}}^{-1}\\[3mm]
+&= \left(\frac{\sum_iY_i}{\pi^2} + \frac{n-\sum_iY_i}{(1-\pi)^2}\right)^{-1}_{\pi = \hat{\pi}}\\[3mm]
+&= \left(\frac{n\hat{\pi}}{\hat{\pi}^2} + \frac{n-n\hat{\pi}}{(1-\hat{\pi})^2}\right)^{-1}\\[3mm]
+&= \frac{\hat{\pi}(1-\hat{\pi})}{n}
+\end{align*}
+$$
