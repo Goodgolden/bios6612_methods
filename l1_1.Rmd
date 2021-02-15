@@ -1,0 +1,468 @@
+---
+title: "Intro to Generalized Linear Models (GLMs), Part 1"
+subtitle: "BIOS 6612"
+author: "Julia Wrobel, PhD"
+date: January 26, 2021
+header-includes:
+   - \usepackage{bm}
+output:
+  powerpoint_presentation:
+    reference_doc: ../cu_style.pptx
+---
+
+```{r, echo= FALSE, include = FALSE}
+## types of outcomes and linear regression review
+
+
+library(tidyverse)
+library(dobson) #  data from Dobson and Barnett GLM book
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE
+)
+
+theme_set(theme_bw() + theme(legend.position = "bottom"))
+```
+
+## Overview
+
+Today, we cover:
+
+* Types of outcomes
+* Linear regression review
+* Where linear regression fails (discrete and non-Normal outcome)
+
+<br>
+
+Readings:
+
+* Dobson & Barnett, Chapter 3
+
+
+## Types of responses (outcome variable)
+
+- Numeric response
+  - Continuous (e.g., weight, blood pressure)
+  - Discrete (e.g., number of deaths, cancer cases, etc.)
+  
+- Categorical response
+  - Nominal (e.g., blood type, gender, state of residence)
+  - Ordinal (e.g., low/medium/high, age group, calendar period)
+
+<br>
+
+- **Typically we want to relate responses to a set of covariates**
+  - How age, exercise, and stress-levels influence blood pressure
+
+::: notes
+- Numeric responses: take on values that are numbers
+Continuous: Not restricted to specific values, can take on any value in a given range
+Discrete: can only take particular values
+
+- we relate responses to predictors via models
+- you've seen this before with linear regression
+:::
+
+## Why Adjust for Covariates at all?
+
+- Measure relationship between an outcome and exposure of interest
+
+<br>
+
+- Control for **confounders**
+
+<br>
+
+- Control for **effect modifiers** (interactions)
+
+<br>
+
+- Assess **effect mediators**
+  - Examine causal pathways
+  - X -> Z -> Y
+  
+
+::: notes
+- cofounders: uncontrolled confounding variables can seriously bias results! Properly controlling for confounding can improve efficiency of the analysis (leading to narrower confidence intervals/smaller p-values)
+- interaction occurs when the effect of one covariate on the outcome depends on the levels of another covariate
+- effect mediators: mediators are different models that we're not going to go into
+:::  
+
+
+## The linear regression model
+
+- To start, we consider the linear regression model:
+
+<br>
+
+$$Y_i = \boldsymbol{x}_i^T\boldsymbol{\beta} + \boldsymbol{\epsilon}_i$$
+
+<br>
+
+- Example: effect of age and BMI on cholesterol in a group of 30 women
+
+- Model components
+  - $Y_i$: outcome value for subject $i$
+  - $\textbf{x}_i= (x_{i1}, x_{i2}, \ldots, x_{ip})$: vector of covariate values for subject $i$
+  - $\boldsymbol{\beta} = (\beta_0, \beta_1, \ldots, \beta_p)$: vector of coefficients that link the outcome to the covariate(s)
+  - $\epsilon_i \sim  \mathcal{N}(0, \sigma^2)$: model error, need to specify distribution
+  - Example: $Y_i = \beta_0 + \beta_1sex_i + \beta_2weight_i + \epsilon_i; \epsilon_i \sim  \mathcal{N}(0, \sigma^2)$
+
+
+::: notes
+- $ \mathcal{N}(\textbf{x}_i^T\boldsymbol{\beta}$ is matrix notation, equivalent to  $\beta_0 + \beta_1x_{i1} +\beta_2x_{i2}...$
+- outcome is chol., age and BMI are covariates
+:::  
+
+## Assumptions of linear regression
+
+- **Independence**: observations $Y_1, Y_2, \ldots Y_n$ are independent of each other
+- **Linearity**: relationship between $x_i$ and $Y_i$ is linear
+- **Homoscedascity**: constant variance 
+- **Normality**: outcome, or at least the error terms, are normally distributed $\epsilon_i \sim N(0, \sigma^2)$
+
+
+<br>
+
+Outcome has a normal distribution conditional on the covariates:
+
+$$E\left(Y_i | \textbf{x}_i \right) \sim \mathcal{N}(\textbf{x}_i^T\boldsymbol{\beta}, \sigma^2)$$
+
+::: notes
+- linearity means linearity in the betas ($E(Y_i) = \beta_^2x_i$ is not allowed), the mean of Y is a straight line function of each X
+- outcome is chol., age and BMI are covariates
+- constant variance assumption means residuals should be randomly distributed around zero and errors DNDO specific covariate values
+:::  
+
+## Linear regression example
+
+
+:::::::::::::: {.columns}
+::: {.column}
+- Interested in effect of age on cholesterol, controlling for BMI
+  - Data from `dobson` package in `R`
+- Continuous outcome, relatively normal- try linear regression
+:::
+::: {.column}
+```{r}
+data(cholesterol) # from dobson package
+
+cholesterol %>%
+  ggplot(aes(x = chol)) + 
+  geom_histogram(binwidth = 0.5, fill = "lightblue", color = "blue") +
+  labs(x = "serum cholesterol (millimoles per liter)", title = "histogram of cholesterol values")
+```
+:::
+::::::::::::::
+
+
+::: notes
+- Many topics covered in linear regression will come up in this course as well
+:::   
+
+
+## Model fitting
+
+- Our model is 
+
+$$Y = \beta_0 + \beta_1 age + \beta_2BMI +  \epsilon$$
+  
+- $Y$ is serum cholesterol level
+- covariates are age and BMI
+
+
+```{r, echo = TRUE}
+chol_mod = lm(chol ~ age + bmi, data = cholesterol)
+summary(chol_mod)$coefficients
+```
+
+::: notes
+- Will be helpful to write out the matrix notation here
+:::  
+
+## Model interpretation
+
+Fitted model is 
+
+$$\hat{Y} = \hat{\beta}_0 + \hat{\beta}_1 age + \hat{\beta}_2BMI$$
+
+
+- This model estimates the average *serum cholesterol*, controlling for *age* and *BMI*
+- $\hat{\beta}_0 = -0.74$: the mean cholesterol level for an individual with 0 values for all other covariates
+  - intercept often not interpretable
+- $\hat{\beta}_1 = 0.041$: mean change in serum cholesterol associated with a 1-year age increase, holding BMI constant
+- $\hat{\beta}_2 = 0.201$: mean change in serum cholesterol associated with a 1 unit BMI increase, holding age constant
+
+::: notes
+- intercept interpretation: nonsense here because no one has an age and BMI of 0
+- other model fit statistics can be important but I won't review them here
+::: 
+  
+## Model checking
+
+
+:::::::::::::: {.columns}
+::: {.column}
+
+```{r}
+cholesterol %>%
+  ggplot(aes(bmi, chol)) +
+  geom_point() +
+    geom_abline(a = 0, b = 1, linetype = 2) + 
+  geom_smooth(method='lm', formula= y~x, color = "blue", se = FALSE) +
+  labs(x = "age", y = "serum cholesterol")
+```
+
+:::
+::: {.column}
+```{r}
+cholesterol %>%
+  mutate(residuals = resid(chol_mod)) %>%
+  ggplot(aes(age, residuals)) +
+  geom_point() +
+  geom_hline(yintercept = 0, color = "red") +
+  labs(x = "age", y = "model residuals")
+```
+:::
+::::::::::::::
+
+::: notes
+- left column is fit
+- relationship between age and cholesterol is reasonably linear
+- right column is residuals
+- residuals ($Y-\hat{Y}$) randomly distributed around zero
+- not a thorough example of model checking, just want to show that linear regression is a reasonable model choice for this data
+::: 
+
+
+## What happens if outcome isn't continuous and (relatively) normal?
+
+- Linear regression might not be such a good idea
+
+<br>
+
+- Let's see why
+
+## Examples: binary response
+
+- Childhood obesity example
+  - Response: obesity ($Y = 1$ if obese; $Y = 0$ otherwise)
+  - Predictors: Age (in years) and Daily TV hours
+
+<br> 
+
+- Senility in elderly patients
+  - Response: presence of senility symptoms ($Y = 1$ if yes, $Y = 0$ if no)
+  - Predictor: WAIS (Wechsler Adult Intelligent Scale) score
+  
+  
+## Linear regression with binary response 
+
+- Fitted linear regression
+- Would expect lower WAIS score for senile subjects
+- Nonsensical results, linear regression assumptions clearly violated
+  
+```{r, echo = TRUE}
+data(senility) # from dobson package
+sen_mod = lm(s ~ x, data = senility)
+```
+
+## Linear regression with binary response 
+
+
+:::::::::::::: {.columns}
+::: {.column}
+
+```{r}
+senility %>%
+  ggplot(aes(x, s)) +
+  geom_point() +
+    geom_abline(a = 0, b = 1, linetype = 2) + 
+  geom_smooth(method='lm', formula= y~x, color = "blue", se = FALSE) +
+  labs(x = "WAIS Score", y = "Presence of senility symptoms (1 = yes, 0 = no)")
+```
+
+:::
+::: {.column}
+```{r}
+senility %>%
+  mutate(residuals = resid(sen_mod)) %>%
+  ggplot(aes(x, residuals)) +
+  geom_point() +
+  geom_hline(yintercept = 0, color = "red") +
+  labs(x = "age", y = "serum cholesterol")
+```
+:::
+::::::::::::::
+
+::: notes
+- which assumptions are violated? Everything except independence!
+- logistic regression meant to handle binary outcomes
+::: 
+
+
+## Linear regression with binary response 
+
+What assumptions are violated?
+
+* Linearity, homoscedasticity, normality
+* Only independence assumption not violated
+
+<br>
+
+* Linear regression is NOT a good idea for binary outcomes
+* Use logistic regression instead
+
+## Examples: count response
+
+- Melanoma example
+  - Response: number of melanoma tumors
+  - Predictors: tumor site (head, arm, hands/feet) and tumor subtype
+
+<br> 
+
+- Heart disease example
+  - Response: count of deaths from coronary heart disease
+  - Predictors: age (in years) and Smoking Status
+  
+<br> 
+
+- Randomize clinical trial example
+  - Response: count of positive responses to a vaccine
+  - Predictors: age group (in three categories) and treatment (3 treatment groups)
+  
+
+
+## Linear regression with count response 
+
+
+:::::::::::::: {.columns}
+::: {.column}
+
+```{r}
+rct = tibble(
+  counts = c(18,17,15,20,10,20,25,13,12),
+  age_group = gl(3,1,9),
+  treatment = gl(3,3)
+)
+
+rct_mod = lm(counts ~ age_group + treatment, data = rct)
+
+rct %>%
+  ggplot(aes(x = counts)) +
+  geom_histogram() + 
+  labs(x = "distribution of trial outcome")
+
+```
+
+:::
+::: {.column}
+```{r}
+rct %>%
+  mutate(residuals = resid(rct_mod)) %>%
+  ggplot(aes(counts, residuals)) +
+  geom_point() +
+  geom_hline(yintercept = 0, color = "red") +
+  labs(x = "counts", y = "model residuals")
+```
+:::
+::::::::::::::
+
+::: notes
+- which assumptions are violated? homoscedasticity
+- poisson regression meant to handle count outcomes
+::: 
+
+
+
+## Examples: ordered categorical response
+
+The University of Regensburg conducted an investigation on senior psychology students regarding future job prospects. One of the key questions was whether they expected to find adequate employment after obtaining their degree.
+
+- Response: ordered categorical 1-3:
+  1. Don’t expect to find adequate employment
+  1. Not sure
+  1. Will obtain adequate employment immediately
+- Predictor: age in years
+
+```{r, ordinal, echo = FALSE}
+data.frame(
+  response_cat1 = c(1, 5, 6, 1, 2,1, 0,0,0,1,0,0,0),
+  response_cat2 = c(2, 18, 19, 6,7,7,0,1,2,0,0,1,1),
+  response_cat3 = c(0,2,2,3,3,5,3,0,1,0,2,0,0),
+  age = c(19:27, 29:31, 34)
+) %>%
+  head(n = 3L)
+```
+
+## Examples: rate modeling
+
+- Consider a table of cells; each with counts (Y) and number of person-years of follow-up (T)
+  - For example, cancer mortality among workers exposed to radiation at Oak Ridge National Laboratory
+    - Of interest is the age-adjusted effect of exposure
+  - Another example: coronary heart disease: incident cases and time at risk by blood pressure, smoking status and personality type
+    - Of interest are the covariate-adjusted effects of each factor
+- We want to model the counts, in a way that accounts for cell-specific differences in person-years
+
+
+## Why not use linear regression for these data types?
+
+- Regression assumptions violated
+- Results often nonsensical
+- Sometimes unclear how the data would fit into LR framework
+
+- Range of outcome and response do not always line up
+  - $\boldsymbol{\beta} \in (-\infty, \infty)$
+  - $\boldsymbol{x}_i^T\boldsymbol{\beta} \in (-\infty, \infty)$
+  - In linear regression, we have range consistency for $E(Y_i) = \mu_i\in (-\infty, \infty)$ and $\boldsymbol{x}_i^T\boldsymbol{\beta}$
+  - Count outcomes: $E(Y_i) \in (0, \infty)$
+  - Binary outcomes: $E(Y_i) \in (0, 1)$
+
+::: notes
+- Basically the whole point of glms is for g(E(Y)) to have the same range as the linear predictor xB
+:::  
+  
+
+
+  
+## Generalizing the normal linear model
+
+- Consider the linear regression model:
+
+$$E\left(Y_i | \textbf{x}_i \right) \sim \mathcal{N}(\textbf{x}_i^T\mathbf{\beta}, \sigma^2)$$
+
+<br>
+
+- Model specification includes
+  - Outcome $Y_i$ and its distribution (could just be error distribution)
+  - Covariates $\textbf{x}_i$ and how they are linked to the mean of the outcome
+
+<br>
+
+- The **generalized** part of GLM refers to
+  - Dropping the normality requirement
+  - Relaxing the homoskedasticity assumption
+  - Allowing for some function $E(Y_i)$ to be linear in the parameters (identity function in normal linear regression)
+  
+
+
+::: notes
+- the function that allows E(Y) to be linear in the parameters fixes the range restriction problem
+:::  
+
+  
+## Generalizing the normal linear model
+
+- Allows us to fit linear models to discrete, non-normal, and categorical outcomes
+
+<br>
+
+- Focuses on outcomes from *exponential family (EF) distributions*
+  - Includes Normal, binomial, Poisson, exponential, and more
+
+<br>
+
+- General framework with three components, regardless of which EF distribution you use
+ 

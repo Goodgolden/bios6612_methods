@@ -1,0 +1,260 @@
+---
+title: "L2.3: MLE Inference"
+subtitle: "BIOS 6612"
+author: "Julia Wrobel"
+date: February 1, 2021
+header-includes:
+   - \usepackage{bm}
+output:
+  powerpoint_presentation:
+    reference_doc: ../cu_style.pptx
+---
+
+```{r, echo= FALSE, include = FALSE}
+library(tidyverse)
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 7,
+  fig.height = 5
+)
+
+theme_set(theme_bw() + theme(legend.position = "bottom"))
+```
+
+
+## Overview
+
+Today, we cover:
+
+* Doing inference on MLEs
+* Likelihood ratio, score, and Wald tests
+
+<br>
+
+Optional readings:
+
+* Dobson & Barnett: Chapters 4, 5.1-5.8
+* Agresti: 1.3-1.5
+
+## Inference 
+
+Asymptotic theory allows for inference about data and parameters in the form of
+
+* Hypothesis tests
+  * Compare how well two related models fit the data
+  * For GLMs, two models should have the same probability distribution and link function but one model can have more covariates than the other
+* Confidence intervals
+
+<br>
+
+Common tests are the
+
+1. Likelihood Ratio Test (LRT)
+1. Wald Test
+1. Score Test
+
+::: notes
+- These are all derived from the asymptotic distributions I mentioned earlier 
+::: 
+
+
+## Likelihood Ratio Test (LRT)
+
+LRT statistics ($T_{LR}$) are constructed from ratio of likelihood functions
+
+* LRT is the ratio of the likelihood at the hypothesized parameter values to the likelihood of the data at the MLE
+  * $\theta_{H_0}$: null hypothesis parameter estimate
+  * $\theta_{MLE}$: MLE parameter estimate
+
+$$T_{LR} = -2\log\left[ \frac{L(\theta_{H_0})}{L(\theta_{MLE})}\right] = -2 \left[\log L(\theta_{H_0})- \log L(\theta_{MLE})\right]$$
+
+* $T_{LR} \sim \chi^2_{df}$: asymptotic chi-squared distribution with df based on number of parameters in $\theta$
+* $H_0$ parameter value is often $\beta = 0$ in linear models
+
+ 
+
+
+## Likelihood Ratio Test
+
+Test can also compare goodness-of-fit between two (nested) models
+
+* Compare full model to reduced model
+* Similar to multiple partial $F$ test
+* $df$: degrees of freedom = #params (full model) - #params (reduced model)
+
+$$T_{LR} =  -2 \left[\log L(reduced)- \log L(full)\right] \sim \chi^2_{df}$$
+<br>
+
+* To compare non-nested models use AIC or another information criterion
+
+##  Wald Test
+
+Wald Test Statistic ($Z^2$) based is on the MLE
+
+<br>
+
+* This is the p-value reported in many parameter estimate tables
+* Has chi-squared distribution with $df$ equal to number of parameters being estimated
+* $\hat{\theta}_{MLE}$: MLE parameter estimate
+* $\theta_{H_0}$: null hypothesis parameter estimate
+* $I(\hat{\theta}_{MLE})$: expected information evaluated at value of MLE
+
+
+##  Wald Test
+
+The multivariate version is:
+
+$$Z^2= \left(\hat{\theta}_{MLE} - \theta_{H_0}\right)^T \left[I(\hat{\theta}_{MLE})\right]\left(\hat{\theta}_{MLE} - \theta_{H_0}\right) \sim \chi^2_{df}  $$
+<br>
+
+The univariate version is:
+
+$$Z^2 = \frac{\left(\hat{\theta}_{MLE} - \theta_{H_0}\right)^2}{Var(\hat{\theta}_{MLE})}, \text{where } Var = 1/I(\hat{\theta}_{MLE})\sim \chi^2_1$$
+
+OR
+
+$$Z = \frac{\left(\hat{\theta}_{MLE} - \theta_{H_0}\right)}{SE(\hat{\theta}_{MLE})}, \text{where } SE = 1/\sqrt{I(\hat{\theta}_{MLE})}\sim N(0,1)$$
+
+::: notes
+- Often denoted $Z^2$
+- Wald tests and confidence intervals can behave in an aberrant manner for logistic regression
+:::
+
+## Score Test
+
+Score test statistics ($T_S$) is based on the value of the score function $U(\theta)$ under the null hypothesis $H_0$
+
+<br>
+
+* Variance of score function equal to expected information
+
+$$U(\theta) = \frac{\partial \log L(\theta)}{\partial \theta}$$
+<br>
+
+* For null hypothesis $H_0: \theta = \theta_{H_0}$,
+
+$$T_S = \frac{U(\theta_{H_0})^2}{Var[U(\theta_{H_0})]} \sim \chi^2_{df}$$
+
+::: notes
+- See Agresti's formulation of this test statistic
+- The score can be written as a sum of independent observations, so we can apply CLT and the score as an asymptotically normal distribution
+:::
+
+## Comparison of LRT, Wald, and Score Tests
+
+* LRT, Wald, and Score tests all have asymptotically chi-square distributions
+* These tests asymptotically equivalent when the null hypothesis is TRUE
+* They differ in small samples or when $H_0$ is FALSE
+
+<br>
+
+* In practice, score tests give best Type 1 error rates for small sample sizes
+* LRTs tend to have the greatest power
+
+## Bernoulli example of each test
+
+Take $n$ *iid* binary variables $Y_1,\ldots, Y_n \sim Bernoulli(\pi)$
+
+$$\log L(\pi; \boldsymbol{Y}) = \log \pi \sum_iY_i + \log(1-\pi)\left(n - \sum_iY_i\right)$$
+
+* $\pi = Pr(Y_i = 1)$
+* $\hat{\pi} = \frac{\sum_iY_i}{n} = \bar{Y}$ is the MLE
+
+<br>
+
+* Want to test $H_0: \pi = \pi_0$ vs. $H_a: \pi \ne \pi_0$ 
+* Can do this using LRT, Wald, or Score test!
+
+## Bernoulli example: LRT
+
+$$\log L(\theta_{H_0}) = \log L(\pi_0) = \log \pi_0 \sum_iY_i + \log(1-\pi_0)\left(n - \sum_iY_i\right)$$
+
+$$\log L(\theta_{MLE}) = \log L(\hat{\pi}) = \log \hat{\pi} \sum_iY_i + \log(1-\hat{\pi})\left(n - \sum_iY_i\right)$$
+
+::: notes
+- Normally pi_0 would be an actual numeric value you can plug in
+:::
+
+
+## Bernoulli example: LRT
+
+$$T_{LR} = -2 \left[\log L(\theta_{H_0})- \log L(\theta_{MLE})\right] \sim \chi^2_1$$
+
+
+
+::: notes
+- Has chi-squared distribution with one degree of freedom
+:::
+
+
+## Bernoulli example: Wald Test
+
+Uses Fisher information evaluated at the MLE
+
+$$I(\hat{\theta}_{MLE}) = I(\hat{\pi}) = \frac{n}{\hat{\pi}(1-\hat{\pi})}$$
+
+Then
+
+$$Z^2 = \frac{(\hat{\theta}_{MLE} - \theta_{H_0})^2}{I^{-1}(\hat{\theta}_{MLE})} = \frac{(\hat{\pi} -\pi_0)^2}{\left(\frac{\hat{\pi}(1-\hat{\pi})}{n}\right)} \sim \chi^2_1$$
+
+## Bernoulli example: Score Test
+
+Uses Score and information functions evaluated at null hypothesis
+
+<br>
+
+$$T_S = \frac{U(\theta_{H_0})^2}{Var[U(\theta_{H_0})]} = \frac{\left(\frac{\sum_iY_i}{\pi_0}-\frac{n-\sum_iY_i}{1-\pi_0}\right)^2}{\left(\frac{n}{\pi_0(1-\pi_0)}\right)} \sim \chi^2_{1}$$
+
+
+
+
+
+::: notes
+- Normally pi0 would be an actual numeric value you can plug in
+- Can use a chi-squared table to calculate a p-value
+:::
+
+## Confidence Interval Construction
+
+Can construct confidence intervals for $H_0: \theta = \theta^*$ by inverting each of the three (Wald, Score, and LR) test statistics.
+
+<br>
+
+* This is easiest for the Wald statistic
+* CI's based on Score, LR Tests often require iterative solutions
+* LR based CI also called *profile likelihood* based CI
+  * More accurate than Wald for small to moderate $n$
+
+## Confidence Intervals: Wald Statistic
+
+Using the Wald Statistic, the $(1-\alpha)*100$\% CI for  $H_0: \theta = \theta^*$ is
+
+<br>
+
+$$\left[\hat{\theta} - z_{\alpha/2} \hat{SE}(\hat{\theta}),  \hat{\theta} + z_{\alpha/2} \hat{SE}(\hat{\theta})\right]$$
+
+<br>
+
+* $z_{\alpha/2} = 1.96$ when $\alpha = 0.05$
+
+
+## Confidence Intervals: LRT
+
+Using the LRT Statistic, the $(1-\alpha)*100$\% CI for  $H_0: \theta = \theta^*$ is found by solving the equation for the values of $\theta^*$ such that
+
+<br>
+
+$$2\log \frac{L(\hat{\theta})}{L(\theta^*)} <\chi^2_{1, 1-\alpha}$$
+
+* $\chi^2_{1, 1-\alpha}$ is the ($1-\alpha$)th quantile from a chi-square distribution with 1 degree of freedom
+* $\chi^2_{1, 1-0.05} = 3.841$
+
+::: notes
+- want the set of theta which solve this equation, needs to be done iteratively
+- 
+:::
+
+

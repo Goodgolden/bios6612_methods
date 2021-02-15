@@ -1,0 +1,261 @@
+---
+title: "Lecture 3.3: Logistic Regression Implementation"
+subtitle: "BIOS 6612"
+author: "Julia Wrobel"
+date: February 8, 2021
+header-includes:
+  - \usepackage{bm}
+output:
+  powerpoint_presentation:
+    reference_doc: ../cu_style.pptx
+---
+  
+```{r, echo= FALSE, include = FALSE}
+## generalizing the normal linear model to
+
+
+library(tidyverse)
+library(dobson) 
+#  data from Dobson and Barnett GLM book
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE
+)
+
+theme_set(theme_bw() + theme(legend.position = "bottom"))
+```
+
+
+## Overview
+
+Today, we cover:
+
+* Logistic regression assumptions
+* Grouped (group-level) and ungrouped (subject-level) data  
+
+
+<br>
+  
+Readings:
+  
+* Agresti: 5 up to 5.23, 5.4
+
+
+
+## Multiple Logistic Regression
+
+Logistic regression with multiple covariates.
+
+* $\pi_i = P(Y_i  = 1)$ and $\boldsymbol{x}_i\boldsymbol{\beta} = \beta_0 + \beta_1X_{1i} +\ldots + \beta_pX_{pi}$
+
+<br>
+
+Model takes the form
+
+$$\log\left(\frac{\pi_i}{1-\pi_i}\right) = \boldsymbol{x}_i\boldsymbol{\beta} 
+
+\implies 
+
+\pi = \frac{e^{\boldsymbol{x}_i\boldsymbol{\beta}}}{1 + e^{\boldsymbol{x}_i\boldsymbol{\beta}}}$$
+
+<br>
+
+Interpretation is
+
+* A unit increase in $X_j$ multiplies the odds by $e^{\beta_j}$
+* A unit increase in $X_j$ multiplies the log-odds by $\beta_j$
+
+## Logistic Regression Assumptions
+
+
+* Observations are independent
+
+<br>
+
+* There is a linear relationship between the covariates $X$ and the log odds of $Y=1$
+
+<br>
+
+* For subject $i$ $Y|X_i$ is Bernoulli with $P(success) = P(Y_i+1|X_i= x_i) = \pi(x_i)$ and variance $\pi(x_i)[1-\pi(x_i)]$
+  * Note: $\pi(x_i)$ is a probability that is a function of the covariates
+  * Note: The variance is *also* a function of the covariates (not homoscedastic)!
+
+
+
+
+## Group vs. Subject Level Data
+
+
+:::::::::::::: {.columns}
+::: {.column}
+Group-level data
+
+* Outcome: Binary (1 = has disease, 0 = doesn't have disease)
+* Predictors: All predictors are discrete (no continuous predictors)
+* Notation: $Y_i$ refers to group $i$'s # of successes
+
+$$Y_i \sim Binomial(n_i, \pi_i)$$
+:::
+::: {.column}
+Subject-level data
+
+* Outcome: Binary (1 = has disease, 0 = doesn't have disease)
+* Predictors: At least one continuous predictor
+* Notation: $Y_i$ refers to subject $i$'s success status
+
+$$Y_i \sim Binomial(1, \pi_i) = Bernoulli(\pi_i)$$
+:::
+::::::::::::::
+
+## Relationship between Binomial and Bernoulli distributions
+
+The Binomial($n, \pi$) distribution models the number of times $Y = 1$ (usually termed success) in an experiment that occurs $n$ times, where $\pi = P(Y = 1)$
+
+<br>
+
+* A Binomial distribution is the sum of i.i.d. Bernoulli random variables
+
+<br>
+
+* A Binomial random variable with $n = 1$ (one trial) is equivalent to a Bernoulli random variable
+
+
+## Group vs. Subject Level data implications
+
+How we treat and test for these will not always be exactly the same
+
+<br>
+
+* Depending on which type of data layout you have, `R` code for fitting a logistic model will change.
+
+<br>
+
+* Some analyses of how well the model fits the data (deviance) will depend on the type of data you have
+
+
+## Group Level data 
+
+All data can be summarized in a table. Assume a binary out come and two binary predictors, gender $\in$ {male, female} and age $\in$ {young, old}
+
+<br>
+
+* Each set of covariates is called a "covariate pattern"
+  * gender = "female" and age = "young"
+  * gender = "male" and age = "young" 
+  * gender = "female" and age = "old"
+  * gender = "male" and age = "old" 
+  
+<br>
+
+If there are $m$ distinct covariate patterns, for each pattern we record the number of individuals having that pattern ($n_j$) and the number of success $s_j$ for $j = 1,\ldots,m$.
+
+
+## Likelihood for Group Level Data
+
+Assume $m$ different covariate patterns, and for pattern $j$ $s_j \sim Binomial(n_j, \pi_j)$
+
+
+$$f(s_j; \pi_j) = {n_j\choose s_j} \pi_j^{s_j}(1-\pi_j)^{n_j - s_j}$$
+
+<br>
+
+$$L(\pi_1,\pi_2,\ldots, \pi_m) = \prod_{j = 1}^m {n_j\choose s_j} \pi_j^{s_j}(1-\pi_j)^{n_j - s_j} \propto \prod_{j = 1}^m \pi_j^{s_j}(1-\pi_j)^{n_j - s_j}$$
+
+::: notes
+- Likelihood for subject-level data is the same one we derived last lecture
+- Likelihood is a function of each (independent) covariate pattern
+- When you maximize, get same estimators as you would for individual level data
+::: 
+
+## Group Level Example: Budworm data
+
+The data come from an experiment on the toxicity of doses of a poison (trans-cypermethrin) to the tobacco budworm (a moth that eats tobacco and other crops).
+
+* Batches of 20 moths of each sex were exposed for three days to the poison 
+* Each batch received different dose of poison
+  * 6 doses (1,2,4,8,16,32 mg)
+* The number in each batch that died was recorded ("success" = death)
+
+
+Data is grouped
+
+* 6 doses, 2 sexes
+* $m = 12$ covariate patterns
+* $n_j = 20$ moths in each covariate pattern
+
+## Group Level Example: Budworm data
+
+* sex: 1 = male, 0 = female
+* dose: mg of poison received
+* s: # of budworms killed
+* n: total # of budworms
+
+
+```{r, echo = TRUE}
+#budworm <- read.table("budworm_data.txt",header=TRUE) # alternative way to load the data
+budworm = read_table2("budworm_data.txt", col_names = TRUE)
+budworm %>% print(n = 3)
+
+nrow(budworm) # number of rows = number of groups
+```
+
+## Budworm data EDA
+
+```{r}
+budworm %>%
+  mutate(prop_dead = s/20,
+         sex_factor = factor(sex, levels = 0:1, labels = c("female", "male"))) %>%
+  ggplot(aes(dose, prop_dead)) +
+  geom_point() +
+  labs(x = "Poison dose in mg", y = "proportion of budworms killed") +
+  facet_wrap(~sex_factor)
+  
+```
+
+
+## Budworm data model
+
+```{r, echo = TRUE}
+budworm_mod = glm(cbind(s, n-s) ~ sex + as.factor(dose), 
+                    family=binomial, data = budworm)
+broom::tidy(budworm_mod)
+```
+
+
+## Subject Level Example: Birthweight data
+
+A study was conducted to identify risk factors for low infant birth weight using data from 189 live births at Bay State Medical Center in Massachusetts. The data file *lowbwt.csv* has the following variables.
+
+* id: id number of infant
+* low: the outcome (1 = birthweight low < 2500 grams) vs (0 = not low > = 2500 grams)
+* smoke: smoking during pregnancy, 1 = yes; 0 = no
+* age: mother's age in years
+* visits: number of physician visits during 1st trimester
+  * 0: none
+  * 1: one
+  * 2: two or more
+
+Age is continuous so this data cannot be summarized at the group level. Researchers are interested in how mother's age and smoking status influences probability of low birthweight.
+
+## Birthweight data 
+
+```{r, echo = TRUE}
+low_birthweight = read_csv("lowbwt.csv")
+
+low_birthweight %>% print(n = 3)
+nrow(low_birthweight) # number of rows = number of subjects
+```
+
+
+
+## Birthweight data 
+
+```{r, echo = TRUE}
+birthweight_mod = glm(low ~ smoke + age, family = binomial, data = low_birthweight)
+broom::tidy(birthweight_mod)
+```
+
+
+

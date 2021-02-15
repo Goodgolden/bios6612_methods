@@ -1,0 +1,287 @@
+---
+title: "Lecture 3.1: Intro to Logistic Regression"
+subtitle: "BIOS 6612"
+author: "Julia Wrobel"
+date: February 8, 2021
+header-includes:
+   - \usepackage{bm}
+output:
+  powerpoint_presentation:
+    reference_doc: ../cu_style.pptx
+---
+
+```{r, echo= FALSE, include = FALSE}
+## generalizing the normal linear model to
+
+
+library(tidyverse)
+library(dobson) #  data from Dobson and Barnett GLM book
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE
+)
+
+theme_set(theme_bw() + theme(legend.position = "bottom"))
+```
+
+## Overview
+
+Today, we cover:
+
+* Measures of association for 2X2 tables
+* Modeling binary outcomes
+* Interpreting logistic regression coefficients in a setting with one binary variable
+
+<br>
+
+Readings:
+
+* Agresti, Chapters 4.2, 5 up to 5.13
+* Dobson & Barnett, Chapter 7.1
+
+## Types of Regression
+
+| Regression Type                | Outcome being modeled   | Data distribution          |
+| :---                           |    :----:               | ---:                       |
+| Linear Regression              | Continuous              | Normal                     |
+| Poisson Regression             | Counts/rate             | Poisson, quasi Poisson     |
+| Cox Regression (survival)      | Time to event           | Exponential, Weibull, etc. |
+| Logistic Regression            | Binary response         | Bernoulli, Binomial        |
+
+
+::: notes
+- there is also polytomous LR and ordinal LR for nominal and ordinal categorical outcomes
+- i.e. no disease, mild disease, severe disease
+::: 
+
+## Types of Regression
+
+GLM theory tells us which link function(s) to use for your data based on the data distribution you chose. Generally,
+
+<br>
+
+* Normal: $g(\mu) = \mu$
+* Poisson: $g(\mu) = \log(\mu)$
+* Bernoulli/Binomial: $g(\mu) = \log\left(\frac{\mu}{1-\mu}\right)$
+
+<br>
+
+Where $\mu = E(Y_i)$
+
+## Logistic Regression
+
+Used to model the association between
+
+* A binary outcome (Y = 1 or Y = 0) and
+* One or more explanatory variables
+  * Can be dichotomous, categorical, and/or continuous
+  
+<br>
+
+Example Binary outcomes  
+
+* Yes/No
+* Disease/No Disease
+* Democrat/Republican
+* Case/Control
+* Low birthweight/Normal birthweight
+
+
+## Measures of Association for 2 x 2 Categorical Data
+
+![](tableL3.1.png)
+
+::: notes
+- In many epidemiological studies, interested in determining if a particular exposure is related to the development of a particular disease
+- This assumes a binary outcome *and* a binary predictor/exposure of interest
+- These were the precursors to logistic regression
+::: 
+
+## Measures of Association for 2 x 2 Categorical Data
+
+This assumes a binary outcome *and* a binary predictor of interest. Want to quantify strength of association between two variables. Some options are:
+
+<br>
+
+* Relative Risk (RR)
+  * The terms risk and probability will be used interchangeably
+* Odds Ratio (OR)
+  * $odds = p/(1-p)$ where $p = Pr(Y = 1)$
+<br>
+
+Odds ratio is appropriate for cohort, cross-sectional, and case-control studies, but RR is NOT appropriate for case-control studies.
+
+::: notes
+- Probability and risk will be used interchangeably
+- We want to use the 2x2 table to get point estimates for these measures.
+::: 
+
+## Odds interpretation
+
+Let X be the outcome when rolling a fair 6-sided die such that
+
+* $Pr(X = 1) = 1/6$
+* $Pr(X \ne 1) = 5/6$
+
+<br>
+
+* Odds of $X = 1$: $(1/6)/(5/6) = 1/5$ or "one-to-five"
+* Odds of $X \ne 1$: $(5/6)/(1/6) = 5/1$ or "five-to-one"
+
+<br>
+
+* Bet on the outcome of $X=1$ then you have 1 chance to win and 5 chances to lose
+* Bet on the outcome of $x \ne 1$ then you have 5 chances to win and 1 chance to lose 
+
+## Motivating example
+
+Consider an observational study where researchers are interested in quantifying the relationship between lung cancer and drinking status.
+
+```{r}
+twobytwo = tibble(
+  drinking_status = c("heavy drinker", "non-drinker"),
+  lung_cancer_yes = c(33, 27),
+  lung_cancer_no = c(1677, 2273)
+)
+
+RR = round(33/(33 + 1607) / (27/ (27+2273)), 2)
+OR = round((33 * 2273)/(27 * 1667),2) 
+
+twobytwo %>% knitr::kable()
+```
+
+* $RR = \frac{\text{P(Disease|Exposed)}}{\text{P(Disease|Not exposed})} = \frac{\hat{p}_1}{\hat{p}_2} = \frac{33/(33 + 1607)}{27/(27+2273)}$
+* $OR = \frac{\hat{p}_1/(1-\hat{p}_1)}{\hat{p}_2/(1-\hat{p}_1)} = \frac{ad}{bc} = \frac{33 \times 2273}{1667 \times 27}$
+
+
+## Risk Ratio Interpretation
+
+The risk ratio for the lung cancer/drinking example is `r RR`. 
+
+* Values of the risk ratio take on the range $RR \in (0, \infty)$
+  * RR = 1 indicates no association
+  * RR > 1 indicates positive association (exposure is related to disease)
+  * RR < 1 indicates negative association (exposure is related to reduced risk of disease)
+
+<br>
+
+The risk of disease (lung cancer) in the exposed (heavy drinking) group is `r RR` times the risk of disease in unexposed (non drinking) group.
+
+## Odds Ratio Interpretation
+
+The odds ratio for the lung cancer/drinking example is `r OR`. 
+
+* Values of the odds ratio take on the range $OR \in (0, \infty)$
+  * OR = 1 indicates no association
+  * OR > 1 indicates positive association (exposure is related to disease)
+  * OR < 1 indicates negative association (exposure is related to reduced odds of disease)
+
+<br>
+
+The odds of disease (lung cancer) in the exposed (heavy drinking) group are `r OR` times the odds of disease in unexposed (non drinking) group.
+
+## Modeling Binary Outcomes
+
+Generally, we want to be able to include more covariates and ones that are not only binary! Regression is the answer. We want to model the probability of an event occuring given a set of covariates, $\pi = P(Y = 1|X)$. Potential options are:
+
+* Linear regression (not a great option)
+  * $\pi = \beta_0 + \beta_1X_1 + \ldots + \beta_pX_p \text{ } \implies -\infty < \pi < \infty$
+* Could model the relative risk by modeling the log of the probabilities 
+  * multiplicative model, log link
+  * $\log (\pi) = \beta_0 +\beta_1X_1 + \ldots + \beta_pX_p \text{ } \implies 0 < \pi < \infty$
+* Could model the log of the odds (also called the logit of the probability)
+ * $\log \left(\frac{\pi}{1-\pi}\right) = \beta_0 +\beta_1X_1 + \ldots + \beta_pX_p \text{ } \implies 0 < \pi < 1$
+
+## Modeling Binary Outcomes
+
+If we model the log odds, which has range $-\infty < \log \left(\frac{\pi}{1-\pi}\right) < \infty$, when we backtransform this constrains $\pi$ to be between 0 and 1:
+
+<br>
+
+$$\pi = \frac{e^{\beta_0 +\beta_1X_1 + \ldots + \beta_kX_k}}{1 + e^{\beta_0 +\beta_1X_1 + \ldots + \beta_pX_p}} = \frac{1}{1+e^{-(\beta_0 + \beta_1X_1 +\ldots + \beta_pX_p)}}$$
+
+<br>
+
+* $\pi = \frac{1}{1 + e^{-\boldsymbol{x}\boldsymbol{\beta}}} = \frac{1}{2}$ when $\boldsymbol{x}\boldsymbol{\beta} = 0$
+* $\lim_{x\beta\to-\infty}\frac{1}{1 + e^{-\boldsymbol{x}\boldsymbol{\beta}}} = 0$
+* $\lim_{x\beta\to\infty}\frac{1}{1 + e^{-\boldsymbol{x}\boldsymbol{\beta}}} = 1$
+
+
+## Form of the logistic regression model
+
+For a given subject in a study, we are interested in modeling $\pi_i = P(Y_i = 1|X_i = x_i)$, where $Y_i \in \{0, 1\}$. The logistic regreression model takes the form
+
+<br>
+
+$$\text{logit}(\pi_i) = \log \left(\frac{\pi_i}{1-\pi_i}\right) = \log\left({\frac{P(Y_i = 1|X_i)}{1-P(Y_i = 1|X_i)}}\right) = \beta_0 + \beta_1X_{1i} + \beta_2X_{2i} + \ldots + \beta_pX_{pi}$$
+<br>
+
+* Called logistic regression because the log of the odds is known as the *logit*, or *logistic* transformation of $\pi$
+
+
+## Interpreting parameters in logistic regression
+
+I'll start with an example with one binary predictor.
+* Use lung cancer/drinking status example from earlier 
+
+<br>
+
+$$\log \left(\frac{\pi_i}{1-\pi_i}\right) = \beta_0 + \beta_1 X_i$$
+
+<br>
+
+* $Y_i = I(\text{has lung cancer})$
+* $X_i = I(\text{heavy drinker})$
+* $\pi_i = P(Y_i = 1|X_i)$, the probability subject $i$ has lung cancer given their drinking status
+
+::: notes
+- write out indicator notation
+::: 
+
+## Interpreting intercept
+
+$$\log \left(\frac{\pi_i}{1-\pi_i}\right) = \beta_0 + \beta_1 X_i$$
+
+* Value of outcome when $X_i = 0$
+* $\beta_0$ is the log odds of lung cancer for a non-drinker
+* $e^{\beta_0}$ is the odds of lung cancer for a non-drinker
+
+
+## Interpreting beta1
+
+* When $X_i = 1 \implies \log\left({\frac{P(Y_i = 1|X_i = 1)}{1-P(Y_i = 1|X_i=1)}}\right) = \beta_0 + \beta_1 \times1 = \beta_0 + \beta_1$
+* When $X_i = 0 \implies \log\left({\frac{P(Y_i = 1|X_i = 0)}{1-P(Y_i = 1|X_i=0)}}\right) = \beta_0 + \beta_1 \times0 = \beta_0$
+
+<br>
+
+$$(\beta_0 + \beta_1) - \beta_0 = \log\left({\frac{P(Y_i = 1|X_i = 1)}{1-P(Y_i = 1|X_i=1)}}\right) - \log\left({\frac{P(Y_i = 1|X_i = 0)}{1-P(Y_i = 1|X_i=0)}}\right)$$
+
+<br>
+
+* $\beta_1$ is the log odds ratio of lung cancer comparing the heavy drinking group to the non-drinking group
+  * Can exponentiate $\beta_1$ to get the OR
+  * $e^{\beta_1}$ is the OR of cancer comparing the drinking group to the non-drinking group
+
+## Interpreting parameters in logistic regression
+
+For generalized linear models, $\beta_j$ is the change in the outcome $g(\mu)$ for a 1-unit change in $X_j$
+
+<br>
+
+* In logistic regression, this is interpreted as the expected change in the natural logarithm of the odds
+  * i.e. change in the log(odds) for a 1-unit change in $X_j$
+
+<br>
+
+* $e^{\beta_j}$ is the odds ratio associated with a 1-unit change in $X_j$
+
+<br>
+
+In LR, we choose $\beta$ values that maximize the likelihood of the observed data.
+
+::: notes
+- we'll see why this makes sense later and get to specific interpretations later
+- we'll get to interpretation with specific examples later
+::: 
