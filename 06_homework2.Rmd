@@ -1,0 +1,300 @@
+---
+title: "06_homework2"
+author: "Randy"
+date: "2/14/2021"
+output: html_document
+---
+
+```{bash}
+git init
+git config --global user.email "goodgolden5@outlook.com"
+git config --global user.name "Randy"
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+### setup
+```{r}
+library(tidyverse)
+library(here)
+
+library(statmod)
+library(MASS)
+
+library(broom)
+library(mdscore)
+```
+
+### question 1h
+```{r}
+beta0 <- -1.6532
+beta1 <- 0.0300
+beta2 <- 1.3356
+beta3 <- -0.0356
+
+
+beta02 <- beta0 + beta2
+beta13 <- beta1 + beta3
+
+
+cat("security == 0, beta0:", beta0, 
+    "beta1:", beta1, "\n")
+cat("security == 1, beta02:", beta02, 
+    "beta13:", beta13, "\n\n")
+```
+
+```{r}
+se_beta0 <- 0.0864
+se_beta1 <- 0.00315
+se_beta2 <- 0.4346
+se_beta3 <- 0.00721
+cov_beta02 <- -0.00746
+cov_beta13 <- -9.92 * 10 ^ -6
+
+
+se_beta02 <- sqrt(se_beta0 ^ 2 + 
+                    se_beta2 ^ 2 + 
+                    2 * cov_beta02)
+se_beta13 <- sqrt(se_beta1 ^ 2 + 
+                    se_beta3 ^ 2 + 
+                    2 * cov_beta13)
+
+
+cat("security==0, se_beta0:", se_beta0, 
+    "se_beta1:", se_beta1, "\n")
+cat("security==1, se_beta02:", se_beta02, 
+    "se_beta13:", se_beta13, "\n\n")
+```
+
+```{r}
+ci95l_beta1 <- beta1 + qnorm(0.025) * se_beta1
+ci95h_beta1 <- beta1 + qnorm(0.975) * se_beta1
+
+
+cat("Point estimator", exp(beta1), "\nProbability", 
+    exp(beta1) / (1 + exp(beta1)), "\n")
+cat("security == 0, 95% ci for beta1:",
+    ci95l_beta1, ",", ci95h_beta1, "\n")
+cat("security == 0, 95% ci for oddratio:"
+    , exp(ci95l_beta1), ",", 
+    exp(ci95h_beta1), "\n\n")
+```
+
+```{r}
+ci95l_beta13 <- beta1 + beta3 + 
+  qnorm(0.025) * se_beta13
+ci95h_beta13 <- beta1 + beta3 + 
+  qnorm(0.975) * se_beta13
+
+cat("Point estimator", exp(beta13), "\nProbability", 
+    exp(beta13) / (1 + exp(beta13)), "\n")
+cat("security == 0, 95% ci for beta13:", ci95l_beta13, 
+    ",", ci95h_beta13, "\n")
+cat("security == 0, 95% ci for oddratio:", 
+    exp(ci95l_beta13), ",", 
+    exp(ci95h_beta13), "\n")
+```
+
+```{r}
+-1.6532 + qnorm(0.025) * se_beta0
+-1.6532 + qnorm(0.975) * se_beta0
+
+pnorm(beta13 / se_beta13)
+```
+
+
+$$
+logitP(security = 0) =
+\beta_{0} + \beta_{1} * score =
+-1.6532 + 0.0300 * score
+$$
+
+$$
+logitP(security = 1) =
+(\beta_{0} + \beta_{2}) + 
+(\beta_{1} + \beta_{3}) * score = 
+-0.3176 - 0.0056 * score
+$$
+
+
+### question 2
+```{r}
+copd <- here("data", "copd.txt") %>%
+  read_table2() %>% 
+  janitor::clean_names()
+
+# View(copd0)
+# names(copd0)
+```
+
+
+```{r}
+# glm_null_logit <-
+#   glm(copd ~ 1,
+#     data = copd,
+#     family = binomial)
+# 
+# glm_bmi_logit <-
+#   glm(copd ~ 1 + bmi, 
+#       data = copd, 
+#       family = binomial)
+
+glm_no_bsq_logit <- 
+  glm(copd ~ 1 + bmi + age + gender + smoker, 
+      data = copd, 
+      family = binomial)
+
+glm_all_logit <- 
+  glm(copd ~ 1 + bmi + age + gender + smoker + bm_isquared, 
+      data = copd, 
+      family = binomial)
+```
+
+```{r}
+## by default the glm use
+## Wald's test in summary
+## square the z score for Wald's
+# summary(glm_all_logit)
+```
+
+
+```{r}
+# tidy(glm_null_logit)
+# tidy(glm_bmi_logit)
+tidy(glm_all_logit) %>%  knitr::kable()
+tidy(glm_no_bsq_logit) %>%  knitr::kable()
+2.703472 ^ 2
+```
+
+
+```{r}
+## different methods for confidence interval
+# confint.default(glm_no_bsq_logit)
+# confint.default(glm_all_logit)
+# 
+# confint(glm_no_bsq_logit)
+# confint(glm_all_logit)
+
+# logLik(glm_all_logit) 
+# logLik(glm_no_bsq_logit)
+```
+
+```{r}
+car::Anova(glm_all_logit,
+           test = "Wald") %>%
+  knitr::kable()
+
+car::Anova(glm_all_logit,
+           test = "LR") %>%
+  knitr::kable()
+```
+
+```{r}
+anova(glm_no_bsq_logit, 
+      glm_all_logit, 
+      ## as LRT / Rao / 
+      ## Chisq / Cp / F
+      test = "LRT") %>%  
+  knitr::kable()
+
+anova(glm_no_bsq_logit, 
+      glm_all_logit, 
+      test = "Rao") %>%  
+  knitr::kable()
+
+anova(glm_no_bsq_logit, 
+      glm_all_logit, 
+      test = "Chisq") %>%  
+  knitr::kable()
+```
+
+```{r}
+drop1(glm_all_logit,
+      test = "LRT") %>%
+  knitr::kable()
+
+drop1(glm_all_logit,
+      test = "Rao") %>%
+  knitr::kable()
+```
+
+```{r fig.height=4, fig.width=8}
+par(mfrow = c(1, 2))
+qres <- qresid(glm_bmi_logit)
+qqnorm(qres, las = 1)
+abline(0, 1)
+
+scatter.smooth(
+  qres ~ fitted(glm_bmi_logit),
+  main = "Residuals v.s. the fitted",
+  xlab = "Fitted",
+  ylab = "Quantile residuals")
+```
+
+### question 2*
+```{r}
+glm_bmisq_logit <- 
+  glm(copd ~ bmi + bm_isquared, 
+      family = binomial, 
+      data = copd)
+
+tidy(glm_bmisq_logit)
+```
+
+```{r}
+anova(glm_bmi_logit,
+      glm_bmisq_logit, 
+      test="LRT")
+
+AIC(glm_bmi_logit)
+AIC(glm_bmisq_logit)
+```
+
+
+```{r}
+llh <- 
+  deviance(glm_null_logit) - 
+  deviance(glm_bmi_logit)
+df <- 
+  df.residual(glm_null_logit) - 
+  df.residual(glm_bmi_logit)
+pchisq(llh, df, lower.tail=F)
+
+score_bmi <- glm.scoretest(glm_null_logit,
+                           copd$bmi)
+p_bmi <- 2 * pnorm(abs(score_bmi), 
+                   lower.tail = F)
+round(c(score_bmi, p_bmi), 4)
+
+score_bmisq <- glm.scoretest(glm_bmi_logit, 
+                             copd$bm_isquared)
+p_bmisq <- 2 * pnorm(abs(score_bmisq), 
+                     lower.tail = F)
+round(c(score_bmisq, p_bmisq), 4)
+```
+
+
+### question 2**
+```{r}
+glm_bmi_log <- 
+  glm_bmi_logit %>%
+  update(family = binomial(link="log"))
+
+glm_bmi_probit <- 
+  glm_bmi_logit %>%
+  update(family = binomial(link="probit"))
+
+glm_bmi_cloglog <- 
+  glm_bmi_logit %>%
+  update(family=binomial(link="cloglog"))
+
+tidy(glm_bmi_logit)
+tidy(glm_bmi_log)
+tidy(glm_bmi_probit)
+tidy(glm_bmi_cloglog)
+```
+```
+
