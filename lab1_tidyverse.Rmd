@@ -1,0 +1,326 @@
+---
+title: "BIOS 6612: A very brief intro to the tidyverse"
+output:
+  html_document: 
+    toc: true
+    toc_float: true
+---
+
+# Overview
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+
+library(tidyverse)
+theme_set(theme_bw() + theme(legend.position = "bottom"))
+```
+
+In this course, I will do examples in `R` using `tidyverse` syntax. The `tidyverse` is a suite of `R` packages developed by RStudio that make it easier to load, clean, manipulate, and visualize data. You can load multiple `tidyverse` packages simulatneously using the following line of code.
+
+```{r, message = FALSE}
+library(broom)
+library(tidyverse)
+library(janitor)
+```
+
+
+# Course stuff
+
+* My lecture slides are written in `Rmarkdown` and **knitted** to Powerpoint
+* Some data examples come from the `dobson` package which links to examples from [this book](http://www.ru.ac.bd/wp-content/uploads/sites/25/2019/03/202_06_Dobson_An-Introduction-to-Generalized-Linear-Models-2008.pdf).
+
+
+## Teaching Assistants
+
+Add the information they put together here
+
+
+
+* Make sure to fill out the survey on Canvas to pick TA office hours!
+
+
+# The `tidyverse` versus base R
+
+"base R" is the version of `R` you get when you install `R` but don't install any other libraries. 
+
+* Most of the data stuff you can do in the `tidyverse` you can also do in base R
+* If you want to use base R instead, that's fine and you won't be penalized on homework assignments
+
+Reasons I'll be using `tidyverse` syntax
+
+* I like it
+* It's easier to read
+* It's good to get exposure to different styles of coding
+
+I won't be teaching `tidyverse` concepts in detail because it's beyond the scope of our class, but I am always happy to answer questions.
+
+
+## Installing the `tidyverse`
+
+```{r, eval = FALSE}
+install.packages("tidyverse")
+library(tidyveryse)
+```
+
+This installs and loads a suite of packages, including
+
+* `dplyr`: data manipulation
+* `ggplot2`: data visualization
+* `tidyr`: data cleaning
+* `readr`: reading in data
+* `purrr`: functional programming
+* `tibble`: tidy version of a `data.frame`
+* `stringr`: working with strings/character valued data
+* `forcats`: for categorical variables, deals with factors
+
+Cheatsheets are available online for each of these packages, I added the `dplyr` and `ggplot2` to the resources page on Canvas.
+
+## The pipe operator `%>%`
+
+The pipe operator (part of the `tidyverse`) let's you chain together functions in `R`. Say you want to do a series of operations in a row. See two ways below:
+
+
+```{r}
+x <- c(0.109, 0.359, 0.63, 0.996, 0.515, 0.142, 0.017, 0.829, 0.907)
+
+# (1) can do this
+round(exp(diff(log(x))), 1)
+
+# (2) or this
+logx = log(x)
+diff_lx = diff(logx)
+exp_df_lx = exp(diff_lx)
+round_result = round(exp_df_lx, 1)
+```
+
+The first way is hard to read, and the second way saves intermediate variables (`logx`, `diff_lx`, ... ) you don't need.
+
+Alternatively, you could use the pipe operator:
+
+```{r}
+x %>% log() %>%
+    diff() %>%
+    exp() %>%
+    round(1)
+```
+
+
+## tibbles
+
+A _tibble_, or `tbl_df`, is basically just a tidyverse version of the `data.frame`. They have some nice properties that make them behave a little bit differently from a data.frame:
+
+* Doesn't automatically convert strings to factors
+* Doesn't use rownames
+* Only prints first 10 rows and number of columns you can fit on one screen:
+
+```{r}
+mtcars
+tibble(mtcars)
+```
+
+You can think about it as a dataframe with a few different properties. Sometimes, when you do tidyverse operations on your dataframe it gets converted to a tibble anyway.
+
+
+## `readr`
+
+I'm going to use data from [Denver Open Data](https://www.denvergov.org/opendata) to highlight utility of the tidyverse. This website provides datasets on all sorts of weird Denver-municipal stuff, including
+
+* Crime related to marijuana use
+* Geolocation of swimming pools in Denver County
+* City budgets
+* Location and checkout history for Denver libraries
+
+I'm going to use the libraries data set. You can download a csv of it [here](https://www.denvergov.org/opendata/dataset/city-and-county-of-denver-libraries).
+
+You can read in the csv file directly from the websit using the `read_csv` function from the `readr` package. 
+
+```{r}
+libraries = read_csv("https://www.denvergov.org/media/gis/DataCatalog/libraries/csv/libraries.csv")
+libraries
+```
+
+This produces a `tibble`.  Alternatively, you could read in the data using `read.csv`.
+
+I like my variable names to be in a specific format- all lowercase with no spaces in the varible names. Luckily, there is a function in the `janitor` package that will do this for you.
+
+```{r}
+libraries = libraries %>% janitor::clean_names()
+libraries
+```
+
+
+I do this basically every time I load a dataset into `R`.
+
+
+## `dplyr` verbs
+
+`dplyr` is my favorite set of tools for data manipulation. It is made up of **verbs** (which are `R` functions) that each solve a different data manipulation task. I'm just showing you a common subset of the verbs I use here, there are many more!
+
+### `select`
+
+Here are the variables available in our libraries dataset.
+
+```{r}
+names(libraries)
+```
+
+`select` lets you choose a subset of variables. Let's say I only care about a few of the variables.
+
+```{r}
+libraries_subset = libraries %>% 
+  select(library_name, city, total_bldg_sqft) 
+libraries_subset
+```
+
+FYI - you don't have to use the `%>%` operate with these `select` or any of the other variables below. I just like the flow of it. Alternatively, code below does the same thing as above:
+
+```{r}
+libraries_subset = select(libraries, library_name, city, total_bldg_sqft)
+```
+
+
+You can also use `select` to remove variables
+
+```{r}
+libraries %>% 
+  select(-status)
+# libraries = libraries %>% select(-status) to save
+```
+
+Or to reorder variables
+
+```{r}
+libraries %>% select(library_name, starts_with("address"), door_count, everything())
+```
+
+
+### `filter`
+
+`filter` let's you choose a subset of rows, based on whether criteria that you supply are TRUE.
+
+```{r}
+libraries %>%
+  filter(circulation > 600000)
+```
+
+You can combine different conditions
+
+```{r}
+libraries %>%
+  filter(city == "Denver", branch_code %in% c("BDY", "UNH", "CRK", "FIE"), door_count > 80000)
+```
+
+
+### `mutate`
+
+`mutate` allows you to create new variables and add them to you dataset
+
+```{r}
+libraries_new = libraries %>%
+  mutate(high_circulation = ifelse(circulation > median(circulation), TRUE, FALSE),
+         favorite_food = "pizza",
+         double_door_count = door_count * 2) %>%
+  select(high_circulation, favorite_food, double_door_count, everything())
+
+libraries_new
+```
+
+### `summarize` and `group_by`
+
+`summarize` produces a summary of variables in your dataset. `group_by` allows you to do operations by group. I often use it in conjunction with `summarize`.
+
+```{r}
+libraries %>%
+  summarize(median = median(circulation), mean = mean(circulation), variance = var(circulation))
+```
+
+
+grouping by zip, calculating number of branches in that zip code. The `arrange` verb sorts the rows.
+
+```{r}
+libraries %>%
+  group_by(zip) %>%
+  summarize(n_branches = n()) %>%
+  arrange(-n_branches)
+```
+
+
+Combining some of the verbs above and producing a prettier table. Make sure to `ungroup()`!
+
+```{r}
+libraries_new %>%
+  mutate(high_circulation = ifelse(circulation > median(circulation), TRUE, FALSE)) %>%
+  group_by(high_circulation) %>%
+  summarize(mean_count = mean(door_count), mean_sqft = mean(total_bldg_sqft)) %>%
+  ungroup() %>%
+  knitr::kable()
+  
+```
+
+
+`dplyr` verbs are intended to be used together!
+
+## `ggplot2`
+
+Many of you may be familiar with `ggplot2`, but I'll show a couple examples.
+
+* Histogram
+
+```{r}
+libraries %>%
+  ggplot(aes(x = circulation)) +
+  geom_histogram() +
+  ggtitle("Circulation of books in Denver libraries")
+```
+
+FYI, if you're not using the pipe operator:
+
+```{r, eval = FALSE}
+ggplot(libraries, aes(x = circulation)) +
+  geom_histogram() +
+  ggtitle("Circulation of books in Denver libraries")
+```
+
+Scatterplot- the Central branch is by far the biggest.
+
+```{r}
+libraries %>%
+  ggplot(aes(x = circulation, y = total_bldg_sqft)) +
+  geom_point(color = "orange") +
+  geom_text(aes(label = branch_code))
+```
+
+Scatterplot with  a regression line- I took the Central branch out of the data as well.
+
+```{r}
+libraries %>%
+  filter(branch_code != "CEN") %>%
+  ggplot(aes(x = circulation, y = total_bldg_sqft)) +
+  geom_point(color = "orange") +
+  geom_smooth(method = "lm", se = FALSE) 
+```
+
+
+Facet_wrap
+
+```{r}
+libraries_new %>%
+  filter(branch_code != "CEN") %>%
+  ggplot(aes(x = door_count, y = total_bldg_sqft)) +
+  geom_point(color = "orange") +
+  geom_smooth(method = "lm", se = FALSE)  +
+  facet_wrap(~high_circulation)
+```
+
+
+
+# Wrap up
+
+* That's all for today
+* I'm happy to talk about the rest of the packages in the tidyverse in subsequent labs- just let me know
+* Links to cheat sheets and tutorials are on Canvas

@@ -1,0 +1,265 @@
+---
+title: "Lab 2: EF and MLE practice"
+subtitle: "BIOS 6612"
+author: "Julia Wrobel"
+date: February 2, 2021
+header-includes:
+   - \usepackage{bm}
+output:
+  powerpoint_presentation:
+    reference_doc: ../cu_style.pptx
+---
+
+```{r, echo= FALSE, include = FALSE}
+library(tidyverse)
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 7,
+  fig.height = 5
+)
+
+theme_set(theme_bw() + theme(legend.position = "bottom"))
+```
+
+
+## Overview
+
+Today, we review:
+
+* Exponential Family distributions
+  * Derivations with Exponential and Gamma distributions
+  * Notation comparison with Casella-Berger
+  
+* MLE derivation
+  * Exponential distribution
+  * Homework hint
+
+<br>
+
+More practice problems:
+
+* D&B excercises 3.3, 3.5, 5.1a-b, 5.3 
+
+
+## Mean and variance of EF distributions
+
+$$f(y;\theta, \phi) = \exp\left\{ \frac{t(y)\theta - b\theta}{a(\phi)} + c(y, \phi )\right\}$$
+
+- In this form, EF distributions have some useful properties:
+
+  - $E(Y) = b'(\theta)$
+  - $Var(Y) = b''(\theta)a(\phi)$
+- $E(Y)$ depends only on the natural parameter, $\theta$
+- $Var(Y)$ is a function of both $\theta$ and $\phi$
+  - Note that in some cases, the variance of the outcome does not depend on the mean at all: e.g., normal distribution
+  - Many other distributions do involve dependence between variance and mean
+
+
+## Example: exponential distribution
+
+* Exponential distribution can be used to model survival (time-to-event) data
+* Continuous PDF
+
+<br>
+
+$$f(y; \lambda) = \lambda e^{-\lambda y}$$
+
+<br>
+
+* $Y \in (0, \infty)$
+* $\lambda \in (0, \infty)$ called *rate* or *inverse scale* parameter
+
+
+::: notes
+- Continuous probability distribution
+- can also be parameterized as $\beta = 1/\lambda$
+::: 
+
+## Example: Exponential distribution
+
+Put in EF form and find $E(Y)$, $Var(Y)$
+
+
+
+## Example: Exponential distribution
+
+
+
+## Example: Gamma distribution
+
+If the random variable $Y$ has the **Gamma distribution** with a scale parameter $\beta$, which is the parameter of interest, and a known shape parameter $\alpha$, then its probability density function is 
+
+<br>
+
+$$f(y; \beta) = \frac{\beta^{\alpha}}{\Gamma(\alpha)} y^{\alpha - 1} e^{-y\beta}.$$
+
+<br>
+
+Show this belongs to the EF and find its expectation and variance.
+
+* FYI $\Gamma(\alpha) = \int_0^{\infty} y^{\alpha - 1}e^{-y}dx$ is called the Gamma function  
+* Problem 3.2 from Dobson and Barnett book.
+
+::: notes
+- Gamma function helps to scale PDF so it integrates to 1
+::: 
+
+
+## Example: Gamma distribution
+
+## Example: Gamma distribution
+
+
+
+
+
+## Notation comparison for EF distributions
+
+Depending on what reference you're using, exponential family notation can look a little different.
+
+<br>
+
+* Good to get exposure to different notation styles
+* Often you can convert between notations
+
+<br>
+
+Dobson and Barnett uses different notation from Casella and Berger. Why?
+
+
+
+## C&B Notation
+
+$$f(y|\boldsymbol{\theta}) = h(y)c(\boldsymbol{\theta})\exp\left\{{\sum_{i = 1}^k w_i(\boldsymbol{\theta}) t_i(y)}\right\}$$
+
+<br>
+
+* $h(y) > 0$
+* $t_1, t_2 \ldots t_k$ are functions of $y$ that DNDO $\theta$
+* $\boldsymbol{\theta}$ can be a vector
+
+## C&B Notation
+
+This notation pre-dates GLMs
+
+<br>
+
+* Same notation as Wikipedia
+* More general
+* Easier to show EF form for "weird" distributions (Beta distribution)
+* Sufficient statistics!
+* Not easy to find E[Y] and Var[Y]
+
+
+## D&B textbook
+
+This notation was explicitly designed for use with GLMs
+
+<br>
+
+* Same notation as McCullagh and Nelder / Nelder and Wedderburn (1972)
+  * They invented GLMs
+* EF form designed to be "nice" for linear models
+* Easy to find link functions that "fit well" with your data
+* Easy to find E[Y] and Var[Y]
+
+## Notation comparison
+
+* Normal distribution illustrates notation differences nicely
+* Will go through at end of lab if there is time
+
+
+## Notation comparison
+
+
+## Notation comparison
+
+
+## Practice Problem: MLEs
+
+
+Assume $Y_1, Y_2,\ldots Y_n \sim Exponential(\lambda)$ 
+
+<br>
+
+1. Find likelihood $L(\lambda; \boldsymbol{Y})$ and score function $U(\theta)$
+1. Find MLE of $\theta$
+1. Derive expected information $I(\theta)$
+1. Find MLE of $\theta^2$
+
+<br>
+
+$$f(y; \lambda) = \lambda e^{-\lambda y}; \text{  } y, \lambda >0$$
+
+
+## (1) Likelihood and Score function
+
+## (2) MLE
+
+
+## (3) Information
+
+
+## (4) MLE of theta squared
+
+
+## Indicator functions
+
+Create binary variables from continuous categorical variables. 
+
+* People sometimes use different notation
+* Let $Y$ be a random variable with some distribution
+* $Z$ is defined as a binary function of $Y$ using an indicator function
+
+<br>
+
+$$Z = I(Y > 20) $$
+<br>
+
+* $Z = 1$ if $(Y > 20$ and $Z = 0$ otherwise
+* $Z$ is also a random variable
+
+<br>
+
+This shows up in Homework 1.
+
+
+## Homework Hint: Problem 2a
+
+Let $Y_1, \ldots Y_n \sim Poisson(\lambda)$
+
+<br>
+
+What is the distribution of $Z_i = I(Y_i > 0)$?
+
+   * Bernoulli(p)
+   * How to find $p$?
+
+## Homework Hint: Problem 2a
+
+Can find $p$ using the properties of the distribution of $Y_i$
+
+<br>
+
+$$p = P(Z_i = 1) = P(Y_i > 0) = 1- P(Y_i = 0)$$
+
+## Homework Hint: Problem 2a
+
+Use Poisson probability mass function
+
+
+
+## Scratch paper
+
+
+## Scratch paper
+
+
+## Scratch paper
+
+
+## Scratch paper
+
