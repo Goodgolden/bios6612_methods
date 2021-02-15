@@ -5,13 +5,6 @@ date: "2/14/2021"
 output: html_document
 ---
 
-```{bash}
-git init
-git config --global user.email "goodgolden5@outlook.com"
-git config --global user.name "Randy"
-```
-
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 ```
